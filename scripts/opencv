@@ -1,0 +1,18 @@
+#!/usr/bin/env node
+const path = require('path');
+const shell = require('shelljs');
+
+// cross platform variables
+const projectRoot = shell.pwd().stdout;
+// the redistributable files need to be copied into the the apps root folder
+// 1. this script copies the dll's into the dist folder
+// 2. electron-builder copies the dll's into the root folder when packaging
+
+const distDir = path.resolve(projectRoot, 'app/dist/redistributable/');
+shell.mkdir('-p', distDir); // create folder if it does not exist yet
+
+// copy necessary redistributable files
+shell.cp('-n', '/Windows/system32/CONCRT140.dll', distDir);
+shell.cp('-n', '/Windows/system32/MSVCP140.dll', distDir);
+shell.cp('-n', '/Windows/system32/VCRUNTIME140.dll', distDir);
+

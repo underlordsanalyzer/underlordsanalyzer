@@ -1,0 +1,21 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  flex: 1;
+  // margin-bottom: 8px;
+  margin: 0px 16px 8px;
+  width: 50%;
+
+  & .settings {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-bottom: 8px;
+
+    & input {
+      width: 25px;
+      text-align: center;
+    }
+  }
+}

@@ -1,0 +1,109 @@
+#!/usr/bin/env node
+const fs = require('fs');
+const http = require('https');
+const path = require('path');
+const shell = require('shelljs');
+const Stream = require('stream').Transform;
+const { JSDOM } = require('jsdom');
+
+const baseUrl = 'https://dotaunderlords.gamepedia.com';
+const url = `${baseUrl}/Heroes`;
+const downloadDir = path.join(__dirname, '..', 'app', 'processor', 'assets', 'heroes');
+
+if (!fs.existsSync(downloadDir)) {
+  shell.mkdir('-p', downloadDir);
+} else {
+  const files = fs.readdirSync(downloadDir);
+  files.forEach(file => fs.unlinkSync(path.join(downloadDir, file)));
+}
+
+const downloadIcon = (name, iconUrl) => {
+  http.get(iconUrl, (resp) => {
+    let data = '';
+    resp.on('data', chunk => data += chunk);
+    resp.on('end', () => {
+      const dom = new JSDOM(data);
+      const url = dom.window.document.querySelector('a.internal').href;
+
+      http.get(url, (imgResp) => {
+        const dataStream = new Stream();
+        imgResp.on('data', (chunk) => dataStream.push(chunk));
+        imgResp.on('end', () => fs.writeFileSync(path.join(downloadDir, `${name}.png`), dataStream.read()));
+      }).on('error', (err) => {
+        console.error(`Error downloading ${name} icon. ${url}`);
+        console.error(err);
+      });
+    });
+  }).on('error', (err) => {
+    console.error(`Error reading ${name} icon page`);
+    console.error(err);
+  });
+};
+
+const parseTier = tier => {
+  switch (tier.trim().toLowerCase().split(' ', 2)[1]) {
+    case 'one': return 1;   // TIER ONE
+    case 'two': return 2;   // TIER TWO
+    case 'three': return 3; // TIER THREE
+    case 'four': return 4;  // TIER FOUR
+    case 'tier': return 5;  // ACE TIER
+    default: return 0;
+  }
+}
+
+const parseName = full => full.match(/^(.*?)(\shero)?\sicon\.png$/)[1].trim();
+
+const parseDisplayName = name => name.toLowerCase().replace(/'/g, '').replace(/\s+/g, '-');
+
+const processPage = (data) => {
+  const dom = new JSDOM(data);
+  const document = dom.window.document;
+  const { last, ...unsortedHeroes } = [...document.querySelectorAll('div.mw-parser-output>table tr')]
+    .reduce((results, row) => {
+      if (header = row.querySelector('th')) {
+        return Object.assign({}, results, { last: parseTier(header.innerHTML) });
+      } else {
+        const imgs = [...row.querySelectorAll('img:not([width="25"])')]
+          .reduce((fullTier, img) => {
+            const name = parseName(img.alt);
+            const displayName = parseDisplayName(name);
+            downloadIcon(displayName, `${baseUrl}/File:${name.replace(/\s/g, '_')}_mini_icon.png`);
+            return Object.assign({}, fullTier, { [displayName]: { tier: results.last, icon: `require(./${displayName}.png)` } })
+          }, {});
+        return Object.assign({}, results, imgs);
+      }
+    }, {});
+
+  const heroes = Object.keys(unsortedHeroes).sort().reduce((all, cur) => Object.assign({}, all, { [cur]: unsortedHeroes[cur] }), {});
+  console.log(heroes);
+
+  const indexData = JSON.stringify(heroes).replace(/\"require\(([^\"]*)\)\"/gm, 'require("$1")');
+  fs.writeFileSync(path.join(downloadDir, 'index.js'), `module.exports = ${indexData}`);
+  console.log(`Downloaded ${Object.keys(heroes).length} icons`);
+  // heroes.reduce((requires, hero) => {
+  //   console.log(JSON.stringify({ [hero.name]: { tier: hero.tier, icon: `require("./${hero.name}.png")` } }).replace(/\"require\(([^\"]*)\)\"/gm, 'require("$1")'));
+  // }, 'module.exports = ');
+  // const requires = {};
+  // for (let icon of icons) {
+  //   const name = icon.name.trim().replace(/'/g, '').replace(/\s+/g, '-').toLowerCase();
+  //   downloadIcon(name, icon.url);
+  //   requires[name] = `require(./${name}.png)`
+  // }
+  // const indexOutput = `module.exports = ${JSON.stringify(requires).replace(/\"require\(([^\"]*)\)\"/gm, 'require("$1")')}`;
+  // fs.writeFileSync(path.join(downloadDir, 'index.js'), indexOutput);
+  // console.log(`Downloaded ${icons.length} icons`);
+};
+
+http.get(url, (resp) => {
+  let data = '';
+
+  resp.on('data', (chunk) => {
+    data += chunk;
+  });
+
+  resp.on('end', () => {
+    processPage(data);
+  });
+}).on('error', (err) => {
+  console.error(err);
+});

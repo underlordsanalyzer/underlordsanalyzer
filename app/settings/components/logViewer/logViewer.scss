@@ -1,0 +1,23 @@
+.log-container {
+  display: flex;
+  flex-direction: column;
+
+  & .button-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+
+    & button {
+      display: flex;
+      margin-bottom: 8px;
+    }
+  }
+
+  & textarea {
+    display: flex;
+    height: calc(100vh - 51px);
+    width: calc(100vw - 22px);
+    resize: none;
+    margin-bottom: 16px;
+  }
+}

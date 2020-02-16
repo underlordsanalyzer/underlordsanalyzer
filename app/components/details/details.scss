@@ -1,0 +1,40 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 400px;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+
+  & .title {
+    font-size: 16px;
+    font-weight: bold;
+  }
+}
+
+.hero-container {
+  display: flex;
+  flex-direction: column;
+
+  & .hero-row {
+    display: flex;
+    flex-direction: row;
+  }
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 30%;
+
+  & .name {
+    font-weight: bold;
+  }
+
+  & img {
+    max-width: 50px;
+    max-height: 50px;
+  }
+}

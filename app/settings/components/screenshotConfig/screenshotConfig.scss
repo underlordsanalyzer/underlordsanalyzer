@@ -1,0 +1,33 @@
+.container {
+  display: flex;
+  flex-direction: row;
+  // flex: 1;
+  flex-wrap: wrap;
+  overflow: auto;
+  margin-bottom: 8px;
+
+  & .window-row {
+    display: flex;
+    flex-direction: column;
+    margin-right: 48px;
+    padding: 8px;
+
+    &.selected {
+      border: 5px dodgerblue solid;
+      padding: 3px;
+    }
+
+    & img {
+      width: 250px;
+    }
+
+    & .radio-container {
+      display: flex;
+      justify-content: center;
+    }
+  }
+}
+
+.spacer {
+  flex: 1;
+}

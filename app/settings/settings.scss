@@ -1,0 +1,101 @@
+form {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+h1 {
+  margin: 0;
+}
+
+.description {
+  margin-top: 8px;
+}
+
+.bar {
+  margin: 16px 0;
+}
+
+.settings-container {
+  display: flex;
+  flex-direction: row;
+  margin: 0 -8px;
+}
+
+.settings-half {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 50%;
+  padding: 0 8px;
+
+  // &:first-of-type {
+  //   border-right: 1px solid #777;
+  // }
+}
+
+.settings {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 8px;
+
+  & > label {
+    margin-right: 8px;
+  }
+
+  & > input {
+    // display: flex;
+    // align-self: center;
+
+    &[type='text'] {
+      width: 50px;
+      text-align: right;
+
+      &:disabled {
+        flex: 1;
+        text-align: inherit;
+      }
+    }
+
+    &[type='number'] {
+      width: 50px;
+    }
+  }
+}
+
+.log-button {
+  display: flex;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.submit-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+  & button {
+    margin-bottom: 16px;
+  }
+
+  & .apply-button {
+    margin-right: 8px;
+  }
+
+  & .log-button, .hero-button {
+    margin-right: 8px;
+  }
+}
+
+.screenshot-container {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 8px;
+
+  & input {
+    flex: 1;
+  }
+}

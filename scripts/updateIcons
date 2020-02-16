@@ -1,0 +1,61 @@
+#!/usr/bin/env node
+const fs = require('fs');
+const http = require('https');
+const path = require('path');
+const shell = require('shelljs');
+const Stream = require('stream').Transform;
+const { JSDOM } = require('jsdom');
+
+const url = 'https://dotaunderlords.gamepedia.com/Category:Hero_mini_icons';
+const downloadDir = path.join(__dirname, '..', 'app', 'processor', 'assets', 'heroes');
+
+if (!fs.existsSync(downloadDir)) {
+  shell.mkdir('-p', downloadDir);
+} else {
+  const files = fs.readdirSync(downloadDir);
+  files.forEach(file => fs.unlinkSync(path.join(downloadDir, file)));
+}
+
+const downloadIcon = (name, iconUrl) => {
+  http.get(iconUrl, (resp) => {
+    const data = new Stream();
+    resp.on('data', (chunk) => data.push(chunk));
+    resp.on('end', () => fs.writeFileSync(path.join(downloadDir, `${name}.png`), data.read()));
+  }).on('error', (err) => {
+    console.error('Error downloading icons');
+    console.error(err);
+  });
+};
+
+const processPage = (data) => {
+  const dom = new JSDOM(data);
+  const document = dom.window.document;
+  const gallery = [...document.querySelectorAll('ul.gallery>li')];
+  const icons = gallery.map(item => {
+    const img = item.querySelector('img');
+    return { name: img.alt.substring(0, img.alt.indexOf('mini')), url: img.src };
+  });
+  const requires = {};
+  for (let icon of icons) {
+    const name = icon.name.trim().replace(/'/g,'').replace(/\s+/g, '-').toLowerCase();
+    downloadIcon(name, icon.url);
+    requires[name] = `require(./${name}.png)`
+  }
+  const indexOutput = `module.exports = ${JSON.stringify(requires).replace(/\"require\(([^\"]*)\)\"/gm, 'require("$1")')}`;
+  fs.writeFileSync(path.join(downloadDir, 'index.js'), indexOutput);
+  console.log(`Downloaded ${icons.length} icons`);
+};
+
+http.get(url, (resp) => {
+  let data = '';
+
+  resp.on('data', (chunk) => {
+    data += chunk;
+  });
+
+  resp.on('end', () => {
+    processPage(data);
+  });
+}).on('error', (err) => {
+  console.error(err);
+});
